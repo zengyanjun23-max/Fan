@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D列印模組化風機實驗室 (翼型與4m/s定風速)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0b0f19; color: #e2e8f0; overflow: hidden; height: 100vh; width: 100vw; }
+        #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        .ui-panel {
+            position: absolute; z-index: 10;
+            background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
+            padding: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        #controls-panel { top: 20px; right: 20px; width: 340px; max-height: 90vh; overflow-y: auto; }
+        #stats-panel { top: 20px; left: 20px; width: 300px; }
+        #charts-panel { bottom: 20px; left: 20px; width: 360px; height: 230px; }
+        #data-panel { bottom: 20px; right: 380px; width: 420px; max-height: 230px; display: flex; flex-direction: column; }
+
+        h2 { font-size: 0.95rem; color: #38bdf8; margin-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .control-group { margin-bottom: 10px; }
+        .control-group label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px; }
+        .control-group span.val { color: #38bdf8; font-weight: 600; }
+        input[type=range], select { width: 100%; height: 6px; border-radius: 3px; background: #334155; outline: none; accent-color: #38bdf8; }
+        select { height: auto; padding: 6px; background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; font-size: 0.8rem; }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .stat-box { background: rgba(30, 41, 59, 0.5); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .stat-box .title { font-size: 0.72rem; color: #64748b; }
+        .stat-box .value { font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-top: 2px; }
+        .stat-box .unit { font-size: 0.7rem; color: #94a3b8; }
+
+        .btn { background: #0284c7; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; }
+        .btn-green { background: #16a34a; }
+
+        .table-wrapper { overflow-y: auto; flex: 1; margin-top: 8px; border: 1px solid #334155; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.72rem; text-align: center; }
+        th, td { padding: 6px; border-bottom: 1px solid #1e293b; }
+        th { background: #1e293b; color: #38bdf8; position: sticky; top: 0; }
+
+        .info-box { background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 6px; padding: 8px; font-size: 0.75rem; color: #cbd5e1; margin-top: 6px; }
+        #chart-canvas { width: 100%; height: 160px; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <!-- 1. 數據監測 -->
+    <div id="stats-panel" class="ui-panel">
+        <h2>發電機輸出數據 (4m/s)</h2>
+        <div class="stat-grid">
+            <div class="stat-box"><div class="title">發電功率 (P)</div><div class="value" id="val-power">0.0 <span class="unit">W</span></div></div>
+            <div class="stat-box"><div class="title">風能效率 (Cp)</div><div class="value" id="val-cp">0.0 <span class="unit">%</span></div></div>
+            <div class="stat-box"><div class="title">發電機轉速</div><div class="value" id="val-gen-rpm">0 <span class="unit">RPM</span></div></div>
+            <div class="stat-box"><div class="title">風輪轉速</div><div class="value" id="val-rotor-rpm">0 <span class="unit">RPM</span></div></div>
+            <div class="stat-box"><div class="title">葉尖速比 (TSR)</div><div class="value" id="val-tsr">0.0</div></div>
+            <div class="stat-box"><div class="title">轉矩 (Torque)</div><div class="value" id="val-torque">0.0 <span class="unit">N·m</span></div></div>
+        </div>
+    </div>
+
+    <!-- 2. 控制面板 -->
+    <div id="controls-panel" class="ui-panel">
+        <h2>實驗組裝與參數設定</h2>
+        
+        <div class="control-group">
+            <label>掃略直徑 (上限950mm): <span class="val" id="disp-diameter">950 mm</span></label>
+            <input type="range" id="slider-diameter" min="300" max="950" step="10" value="950">
+        </div>
+
+        <div class="control-group">
+            <label>葉片基本翼型 (Airfoil):</label>
+            <select id="select-airfoil">
+                <option value="flat,0.7">平直板翼型 (Flat Plate) - 低效率</option>
+                <option value="naca0012,0.85">NACA 0012 (對稱翼型)</option>
+                <option value="naca4412,1.0" selected>NACA 4412 (高升力翼型)</option>
+                <option value="s809,0.95">S809 (風機專用翼型)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>葉片角度 (可調式葉面): <span class="val" id="disp-pitch">8.0°</span></label>
+            <input type="range" id="slider-pitch" min="-5" max="30" step="0.5" value="8">
+        </div>
+
+        <div class="control-group">
+            <label>模組化變速箱齒比:</label>
+            <select id="select-gear">
+                <option value="8,0.5,25,200">0.5M (25T/200T) - 1:8 | OD:13.5/101mm</option>
+                <option value="10,1.25,10,100">1.25M (10T/100T) - 1:10 | OD:15/127.5mm</option>
+                <option value="10,1,12,120" selected>1M (12T/120T) - 1:10 | OD:14/122mm</option>
+                <option value="10,1,10,100">1M (10T/100T) - 1:10 | OD:12/102mm</option>
+            </select>
+        </div>
+
+        <div class="info-box" id="gear-calc-info">
+            算式: (齒數 + 2) × 模數 = 齒輪外徑<br>
+            主動齒外徑: 14.0 mm | 被動齒外徑: 122.0 mm
+        </div>
+
+        <div class="control-group" style="margin-top: 10px;">
+            <label>測試風速 (固定 4 m/s): <span class="val" id="disp-wind">4.0 m/s</span></label>
+            <input type="range" id="slider-wind" min="4" max="15" step="0.5" value="4">
+        </div>
+    </div>
+
+    <!-- 3. 圖表 -->
+    <div id="charts-panel" class="ui-panel">
+        <h2>Cp - TSR 效率曲線圖</h2>
+        <canvas id="chart-canvas"></canvas>
+    </div>
+
+    <!-- 4. 數據紀錄表 -->
+    <div id="data-panel" class="ui-panel">
+        <h2>
+            實驗數據紀錄
+            <div>
+                <button class="btn btn-green" onclick="recordData()">紀錄數據</button>
+                <button class="btn" onclick="exportCSV()">匯出 CSV</button>
+            </div>
+        </h2>
+        <div class="table-wrapper">
+            <table id="exp-table">
+                <thead>
+                    <tr>
+                        <th>直徑(mm)</th>
+                        <th>翼型</th>
+                        <th>角度(°)</th>
+                        <th>齒比</th>
+                        <th>功率(W)</th>
+                        <th>Cp(%)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const RHO = 1.225;
+        const NUM_BLADES = 3;
+        
+        let diameterMM = 950, pitchAngle = 8.0, windSpeed = 4.0;
+        let gearRatio = 10, moduleM = 1, pinT = 12, gearT = 120;
+        let airfoilType = 'naca4412', airfoilEfficiency = 1.0;
+        
+        let currentPower = 0, currentCp = 0, currentTSR = 0, currentTorque = 0;
+        let rotorRPM = 0, genRPM = 0;
+        let expDataLog = [];
+
+        let scene, camera, renderer, controls, turbineGroup, rotorGroup, particleGeometry, particlePositions;
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b0f19);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.set(0, 15, 85);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(30, 50, 50);
+            scene.add(ambientLight, dirLight);
+
+            build3DTurbine();
+            buildParticles();
+            calculatePhysics();
+
+            window.addEventListener('resize', onResize);
+        }
+
+        function build3DTurbine() {
+            if (turbineGroup) scene.remove(turbineGroup);
+            turbineGroup = new THREE.Group();
+
+            const mat3D = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3 });
+            const hubMat = new THREE.MeshStandardMaterial({ color: 0x64748b });
+
+            const tower = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 2, 45, 32), hubMat);
+            tower.position.y = -22.5;
+            turbineGroup.add(tower);
+
+            rotorGroup = new THREE.Group();
+            
+            const hub = new THREE.Mesh(new THREE.ConeGeometry(2.5, 4, 32), hubMat);
+            hub.rotation.x = Math.PI / 2;
+            rotorGroup.add(hub);
+
+            const bladeLength = (diameterMM / 1000) * 20;
+            const thickness = airfoilType === 'flat' ? 0.1 : (airfoilType === 'naca0012' ? 0.3 : 0.45);
+
+            for (let b = 0; b < NUM_BLADES; b++) {
+                const bladeHolder = new THREE.Group();
+                bladeHolder.rotation.z = (b * 2 * Math.PI) / NUM_BLADES;
+
+                const blade = new THREE.Mesh(new THREE.BoxGeometry(1.2, bladeLength, thickness), mat3D);
+                blade.position.y = bladeLength / 2 + 1.5;
+                blade.rotation.y = (pitchAngle * Math.PI) / 180;
+                bladeHolder.add(blade);
+                
+                rotorGroup.add(bladeHolder);
+            }
+
+            turbineGroup.add(rotorGroup);
+            scene.add(turbineGroup);
+        }
+
+        function calculatePhysics() {
+            const radiusM = (diameterMM / 1000) / 2;
+            const area = Math.PI * radiusM * radiusM;
+
+            const optPitch = 6.0;
+            const pitchFactor = Math.max(0, 1 - Math.pow((pitchAngle - optPitch) / 15, 2));
+            
+            currentTSR = 5.5 * pitchFactor * airfoilEfficiency;
+            const omegaRotor = (currentTSR * windSpeed) / radiusM;
+            rotorRPM = (omegaRotor * 60) / (2 * Math.PI);
+            genRPM = rotorRPM * gearRatio;
+
+            const pWind = 0.5 * RHO * area * Math.pow(windSpeed, 3);
+            currentCp = 38.0 * pitchFactor * airfoilEfficiency * (radiusM / 0.475);
+            currentCp = Math.min(48.0, Math.max(0, currentCp));
+
+            currentPower = pWind * (currentCp / 100);
+            currentTorque = omegaRotor > 0 ? currentPower / omegaRotor : 0;
+
+            document.getElementById('val-power').innerHTML = `${currentPower.toFixed(2)} <span class="unit">W</span>`;
+            document.getElementById('val-cp').innerHTML = `${currentCp.toFixed(1)} <span class="unit">%</span>`;
+            document.getElementById('val-rotor-rpm').innerHTML = `${Math.round(rotorRPM)} <span class="unit">RPM</span>`;
+            document.getElementById('val-gen-rpm').innerHTML = `${Math.round(genRPM)} <span class="unit">RPM</span>`;
+            document.getElementById('val-tsr').innerText = currentTSR.toFixed(2);
+            document.getElementById('val-torque').innerHTML = `${currentTorque.toFixed(2)} <span class="unit">N·m</span>`;
+
+            drawChart();
+        }
+
+        function drawChart() {
+            const canvas = document.getElementById('chart-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+
+            const pad = 30;
+            const w = canvas.width - pad * 2;
+            const h = canvas.height - pad * 2;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#334155';
+            ctx.strokeRect(pad, pad, w, h);
+
+            ctx.strokeStyle = '#64748b';
+            ctx.beginPath();
+            for (let t = 0; t <= 10; t += 0.5) {
+                let cpVal = (t / 5) * Math.exp(1 - t / 5) * currentCp;
+                const x = pad + (t / 10) * w;
+                const y = pad + h - (cpVal / 50) * h;
+                if (t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            const curX = pad + Math.min(1, currentTSR / 10) * w;
+            const curY = pad + h - (currentCp / 50) * h;
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(curX, curY, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function updateGearInfo() {
+            const pinOD = (pinT + 2) * moduleM;
+            const gearOD = (gearT + 2) * moduleM;
+            document.getElementById('gear-calc-info').innerHTML = 
+                `算式: (齒數 + 2) × 模數 = 齒輪外徑<br>主動齒外徑: <b>${pinOD.toFixed(1)} mm</b> | 被動齒外徑: <b>${gearOD.toFixed(1)} mm</b>`;
+        }
+
+        function recordData() {
+            const tbody = document.querySelector('#exp-table tbody');
+            const tr = document.createElement('tr');
+            
+            const log = {
+                dia: diameterMM,
+                airfoil: airfoilType,
+                pitch: pitchAngle,
+                gear: `1:${gearRatio}`,
+                power: currentPower.toFixed(2),
+                cp: currentCp.toFixed(1)
+            };
+            expDataLog.push(log);
+
+            tr.innerHTML = `<td>${log.dia}</td><td>${log.airfoil}</td><td>${log.pitch}°</td><td>${log.gear}</td><td>${log.power}</td><td>${log.cp}%</td>`;
+            tbody.appendChild(tr);
+        }
+
+        function exportCSV() {
+            if (expDataLog.length === 0) return alert("尚無實驗資料！");
+            let csv = "直徑(mm),翼型,葉片角度(deg),齒輪比,發電功率(W),Cp(%)\n";
+            expDataLog.forEach(r => { csv += `${r.dia},${r.airfoil},${r.pitch},${r.gear},${r.power},${r.cp}\n`; });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = '3D列印風機實驗數據.csv';
+            a.click();
+        }
+
+        function buildParticles() {
+            const count = 600;
+            particleGeometry = new THREE.BufferGeometry();
+            particlePositions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                particlePositions[i * 3] = (Math.random() - 0.5) * 100;
+                particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 60;
+                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 60;
+            }
+
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+            const pMat = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.5, transparent: true, opacity: 0.3 });
+            scene.add(new THREE.Points(particleGeometry, pMat));
+        }
+
+        document.getElementById('slider-diameter').addEventListener('input', (e) => {
+            diameterMM = +e.target.value;
+            document.getElementById('disp-diameter').innerText = diameterMM + ' mm';
+            build3DTurbine();
+            calculatePhysics();
+        });
+
+        document.getElementById('select-airfoil').addEventListener('change', (e) => {
+            const [type, eff] = e.target.value.split(',');
+            airfoilType = type;
+            airfoilEfficiency = parseFloat(eff);
+            build3DTurbine();
+            calculatePhysics();
+        });
+
+        document.getElementById('slider-pitch').addEventListener('input', (e) => {
+            pitchAngle = +e.target.value;
+            document.getElementById('disp-pitch').innerText = pitchAngle + '°';
+            build3DTurbine();
+            calculatePhysics();
+        });
+
+        document.getElementById('select-gear').addEventListener('change', (e) => {
+            const [r, m, p, g] = e.target.value.split(',').map(Number);
+            gearRatio = r; moduleM = m; pinT = p; gearT = g;
+            updateGearInfo();
+            calculatePhysics();
+        });
+
+        document.getElementById('slider-wind').addEventListener('input', (e) => {
+            windSpeed = +e.target.value;
+            document.getElementById('disp-wind').innerText = windSpeed + ' m/s';
+            calculatePhysics();
+        });
+
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        let lastTime = performance.now();
+        function animate(now) {
+            requestAnimationFrame(animate);
+            const dt = (now - lastTime) / 1000;
+            lastTime = now;
+
+            if (rotorGroup) rotorGroup.rotation.z -= (rotorRPM * 2 * Math.PI / 60) * dt;
+
+            const pos = particleGeometry.attributes.position.array;
+            for (let i = 0; i < pos.length / 3; i++) {
+                pos[i * 3 + 2] -= windSpeed * dt * 5;
+                if (pos[i * 3 + 2] < -30) pos[i * 3 + 2] = 30;
+            }
+            particleGeometry.attributes.position.needsUpdate = true;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        init();
+        animate(performance.now());
+    </script>
+</body>
+</html>
