@@ -1,0 +1,5 @@
+duplicate_ids=[]
+missing_anchors=[]
+missing_canvas=[]
+responsive_media_rules=4
+breakpoints=1100px,820px,600px,390px

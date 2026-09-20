@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WIND LAB 展覽版｜風力發電機互動科學展</title>
+<style>
+:root{--bg:#06101b;--panel:#0b1b2a;--line:#29445a;--cyan:#72e6ff;--text:#ecf9ff;--muted:#a7bdcb;--yellow:#ffd166;--red:#ff8f8f}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 70% 5%,#12304a 0,#06101b 38%);color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei",Arial,sans-serif}
+header{position:sticky;top:0;z-index:50;background:#06101beF;border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}
+nav{max-width:1250px;margin:auto;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.logo{font-weight:900;color:var(--cyan);font-size:21px}
+nav a{color:#cce1ed;text-decoration:none;padding:7px 9px;border-radius:8px;font-size:14px}nav a:hover{background:#14314a}
+section{max-width:1250px;margin:auto;padding:70px 18px}.hero{min-height:91vh;display:grid;grid-template-columns:.9fr 1.25fr;gap:28px;align-items:center}
+h1{font-size:clamp(42px,6vw,78px);line-height:1.03;margin:12px 0}h2{font-size:35px;margin:0 0 8px}h3{margin-top:4px}.lead{font-size:20px;line-height:1.85;color:#bdd1de}.muted{color:var(--muted);line-height:1.7;overflow-wrap:anywhere}
+.card{min-width:0;background:linear-gradient(145deg,#0d2031,#091725);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 14px 50px #0005}
+canvas{display:block;width:100%;background:#071522;border-radius:14px}.wrap{position:relative}.badge{position:absolute;left:12px;top:12px;background:#04101ad9;padding:7px 10px;border-radius:8px;font-size:13px;color:#bff4ff}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;min-width:0}
+
+.step-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.step-card{min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.step-title{min-height:92px}
+.step-title h3{font-size:22px;line-height:1.4;margin:10px 0 0;overflow-wrap:anywhere}
+.step-figure{width:100%;height:205px;flex:0 0 205px;margin:3px 0 8px;overflow:hidden;border-radius:12px;background:#071521;border:1px solid #203a50}
+.step-figure svg{display:block;width:100%;height:100%;overflow:hidden}
+.figure-caption{display:grid;grid-template-columns:1fr;gap:4px;min-height:60px;margin:0 0 10px;padding:8px 10px;border:1px solid #203a50;border-radius:10px;background:#091b2a;color:#bdd2df;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.figure-caption .accent{color:#72e6ff;font-weight:800}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+
+.metric{font-size:30px;font-weight:900;color:#effcff}.cyan{color:var(--cyan)}.yellow{color:var(--yellow)}
+.control{margin:15px 0}.control label{display:flex;justify-content:space-between;margin-bottom:6px;color:#c9dce7}input[type=range]{width:100%;accent-color:var(--cyan);min-height:28px;touch-action:pan-y}
+.formula{max-width:100%;overflow-wrap:anywhere;font-size:24px;text-align:center;background:#071521;border:1px solid #203a50;border-radius:12px;padding:14px;margin:13px 0}
+.bar{height:10px;background:#1b3042;border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .2s}
+.pill{display:inline-block;padding:6px 10px;background:#12334a;border-radius:999px;color:#aeefff;margin:3px}.btn{display:inline-block;border:0;border-radius:10px;background:#1b829b;color:white;padding:11px 15px;font-weight:800;cursor:pointer;text-decoration:none}.btn:hover{background:#2ca8c2}
+table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #243b50;text-align:left}th{color:#9feeff}
+.quiz button{display:block;width:100%;margin:8px 0;padding:11px;text-align:left;background:#10263a;color:#dceef7;border:1px solid #2b465c;border-radius:9px;cursor:pointer}.quiz button:hover{background:#173750}.answer{margin-top:10px;font-weight:700}
+footer{text-align:center;color:#718b9c;padding:45px 18px;border-top:1px solid #21384d}
+@media(max-width:1100px){
+  .hero{grid-template-columns:1fr 1fr}
+  .step-grid{grid-template-columns:repeat(2,minmax(280px,1fr))}
+  section{padding-left:16px;padding-right:16px}
+}
+@media(max-width:820px){
+  header{position:sticky;top:0}
+  nav{padding:10px 12px}
+  nav .links{
+    display:flex;
+    flex:1 1 auto;
+    min-width:0;
+    overflow-x:auto;
+    overflow-y:hidden;
+    white-space:nowrap;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  nav .links::-webkit-scrollbar{display:none}
+  nav a{font-size:13px;padding:7px 8px;flex:0 0 auto}
+  .logo{font-size:18px}
+  .hero,.grid2{grid-template-columns:1fr}
+  .step-grid,.grid3{grid-template-columns:1fr 1fr}
+  h1{font-size:clamp(40px,9vw,60px)}
+  h2{font-size:31px}
+  .lead{font-size:18px}
+}
+@media(max-width:600px){
+  body{font-size:15px}
+  section{padding:42px 12px}
+  nav{align-items:center}
+  .logo{font-size:17px}
+  nav .links{max-width:58vw}
+  nav a{font-size:12px;padding:6px 7px}
+  .step-grid,.grid3{grid-template-columns:1fr}
+  .step-title{min-height:auto}
+  .step-title h3{font-size:20px}
+  .step-figure{height:190px;flex-basis:190px}
+  .figure-caption{font-size:13px}
+  .formula{font-size:20px;padding:12px}
+  .metric{font-size:26px}
+  .card{padding:15px;border-radius:14px}
+  .btn{width:100%;text-align:center;margin-top:4px}
+  table{display:block;overflow-x:auto;white-space:nowrap;font-size:14px}
+  canvas{max-width:100%;height:auto}
+}
+@media(max-width:390px){
+  section{padding-left:9px;padding-right:9px}
+  nav .links{max-width:53vw}
+  h2{font-size:27px}
+  .step-title h3{font-size:18px}
+  .formula{font-size:18px}
+  .metric{font-size:23px}
+  .control label{font-size:14px}
+}
+  .step-title{min-height:auto}
+  .step-figure{height:190px;flex-basis:190px}
+  .figure-caption{font-size:14px}
+  nav .links{display:none}
+  section{padding:48px 14px}
+  h2{font-size:30px}
+}
+  .step-title{min-height:auto}
+  .step-figure{height:190px;flex-basis:190px}
+  nav .links{display:none}
+  section{padding:48px 14px}
+  h2{font-size:30px}
+}
+</style>
+</head>
+<body style="overflow-x:hidden;">
+<header><nav><div class="logo">🌬️ WIND LAB EXHIBITION</div><div class="links">
+<a href="#hero">首頁</a><a href="#flow">流場</a><a href="#aero">氣動力</a><a href="#mechanics">機械</a><a href="#power">功率</a><a href="#generator">發電</a><a href="#experiment">實驗模型</a><a href="#challenge">挑戰</a>
+</div></nav></header>
+
+<section id="hero" class="hero">
+<div>
+<span class="pill">永續能源</span><span class="pill">流體力學</span><span class="pill">機械</span><span class="pill">電磁感應</span>
+<h1>風，<br><span class="cyan">怎麼變成電？</span></h1>
+<p class="lead">互動風力發電機實驗室。從「風怎麼推動葉片」開始，一步一步看到旋轉、功率，再理解發電。</p>
+<a class="btn" href="#flow">開始實驗 ↓</a>
+</div>
+<div class="card wrap"><span class="badge">互動 3D 透視風機</span><canvas id="heroCanvas" width="820" height="540"></canvas></div>
+</section>
+
+<section id="flow">
+<h2>01｜流體力學：風怎麼讓風機轉？</h2>
+<p class="muted">把過程拆成三步：先看風怎麼推葉片，再看空氣怎麼跟著轉，最後理解速度和壓力的關係。</p>
+
+<div class="step-grid">
+
+  <article class="card step-card">
+    <div class="step-title">
+      <span class="pill">STEP 1</span>
+      <h3>🌬️ 風推葉片，葉片開始轉</h3>
+    </div>
+
+    <div class="step-figure">
+<svg viewBox="0 0 560 260" role="img" aria-label="風流向有角度的葉片，葉片受力後開始旋轉">
+<defs>
+<marker id="s1-air" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0L12 6L0 12Z" fill="#72e6ff"/></marker>
+<marker id="s1-rot" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0L12 6L0 12Z" fill="#ffd166"/></marker>
+</defs>
+<g stroke="#72e6ff" stroke-width="5" marker-end="url(#s1-air)" stroke-linecap="round">
+<line x1="30" y1="70" x2="155" y2="70"/><line x1="30" y1="130" x2="155" y2="130"/><line x1="30" y1="190" x2="155" y2="190"/>
+</g>
+<g transform="translate(270 130) rotate(-23)">
+<path d="M-16 -17C65 -43 151 -36 220 -6C153 28 72 38 -16 17C-28 10 -28 -10 -16 -17Z" fill="#72e6ff" stroke="#efffff" stroke-width="4"/>
+</g>
+<circle cx="270" cy="130" r="18" fill="#fff"/>
+<path d="M330 222C420 215 485 168 470 92" fill="none" stroke="#ffd166" stroke-width="7" marker-end="url(#s1-rot)" stroke-linecap="round"/>
+</svg>
+</div>
+<div class="figure-caption">
+<div>🌬️ 風從左邊吹來</div>
+<div>🪽 葉片有一個角度</div>
+<div class="accent">↻ 推力讓它轉起來</div>
+</div>
+
+    <p class="step-text"><b>先記住一句話：</b>風碰到有角度的葉片，葉片受到推力；推力讓轉子開始轉。</p>
+    <div class="formula">風 → 推力 → 旋轉</div>
+  </article>
+
+  <article class="card step-card">
+    <div class="step-title">
+      <span class="pill">STEP 2</span>
+      <h3>🌀 葉片轉，後面的空氣也跟著轉</h3>
+    </div>
+
+    <div class="step-figure">
+<svg viewBox="0 0 560 260" role="img" aria-label="風機後方形成旋轉尾流">
+<defs>
+<marker id="s2-air" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0L12 6L0 12Z" fill="#72e6ff"/></marker>
+</defs>
+<g stroke="#72e6ff" stroke-width="5" marker-end="url(#s2-air)" stroke-linecap="round">
+<line x1="30" y1="70" x2="145" y2="70"/><line x1="30" y1="130" x2="145" y2="130"/><line x1="30" y1="190" x2="145" y2="190"/>
+</g>
+<circle cx="190" cy="130" r="18" fill="#fff"/>
+<path d="M190 70C252 49 309 83 294 130C279 178 223 198 187 169" fill="none" stroke="#72e6ff" stroke-width="6"/>
+<path d="M190 190C128 211 72 177 86 130C101 83 157 62 193 91" fill="none" stroke="#72e6ff" stroke-width="6"/>
+<path d="M330 77C396 64 457 94 445 137C432 180 382 189 345 165" fill="none" stroke="#ffd166" stroke-width="6"/>
+<path d="M330 183C266 198 213 166 226 124C238 84 283 71 318 96" fill="none" stroke="#ffd166" stroke-width="6"/>
+</svg>
+</div>
+<div class="figure-caption">
+<div>🌬️ 風吹進來</div>
+<div>🌀 風機轉動</div>
+<div class="accent">↻ 後面的空氣也跟著旋轉</div>
+</div>
+
+    <p class="step-text"><b>想像一下：</b>風機轉動時，也會把一部分「旋轉的動量」帶給後方空氣，所以尾流會出現旋轉。</p>
+    <div class="formula">葉片轉動 → 空氣形成旋轉尾流</div>
+  </article>
+
+  <article class="card step-card">
+    <div class="step-title">
+      <span class="pill">STEP 3</span>
+      <h3>💨 葉片附近：速度變化，壓力也會變</h3>
+    </div>
+
+    <div class="step-figure">
+<svg viewBox="0 0 560 260" role="img" aria-label="翼型周圍氣流速度與壓力的簡化示意">
+<defs>
+<marker id="s3-air" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0L12 6L0 12Z" fill="#72e6ff"/></marker>
+</defs>
+<path d="M120 135C210 82 353 83 455 125C355 164 213 175 120 135Z" fill="#9eeeff" stroke="#f0ffff" stroke-width="4"/>
+<g stroke="#72e6ff" stroke-width="5" marker-end="url(#s3-air)" stroke-linecap="round">
+<line x1="35" y1="72" x2="145" y2="66"/><line x1="35" y1="104" x2="155" y2="97"/>
+<line x1="35" y1="166" x2="155" y2="172"/><line x1="35" y1="195" x2="145" y2="201"/>
+</g>
+<circle cx="415" cy="78" r="24" fill="#ffd166"/>
+<circle cx="415" cy="184" r="24" fill="#36566c"/>
+</svg>
+</div>
+<div class="figure-caption">
+<div>💨 上方氣流較快</div>
+<div>🪽 翼型</div>
+<div class="accent">↕ 速度改變 → 壓力也會變化</div>
+</div>
+
+    <p class="step-text"><b>不用先背公式：</b>在理想流動中，流速與靜壓有關。伯努力定律就是幫我們理解這件事的工具。</p>
+    <div class="formula">速度 ↔ 壓力</div>
+  </article>
+
+</div></div>
+
+<div class="grid2" style="margin-top:18px">
+<div class="card wrap"><span class="badge">細緻流線＋旋轉尾流</span><canvas id="flowCanvas" width="820" height="500" aria-label="風場流線與空氣粒子動畫"></canvas></div>
+<div class="card">
+<h3>風場控制台</h3>
+<div class="control"><label>風速 V <b id="v1">8.0 m/s</b></label><input id="wind" type="range" min="2" max="18" step=".1" value="8"></div>
+<div class="control"><label>風機偏航角 <b id="yawO">0°</b></label><input id="yaw" type="range" min="-35" max="35" value="0"></div>
+<div class="formula">q = ½ρV²</div>
+<div class="metric" id="dynamicP">39.2 Pa</div>
+<p class="muted">先看風怎麼推葉片，再看空氣怎麼跟著轉，最後理解「速度和壓力」的關係。</p>
+<div class="grid2"><div><span class="muted">流線狀態</span><div class="metric" id="flowState">穩定</div></div><div><span class="muted">相對風向</span><div class="metric" id="dir">0°</div></div></div>
+</div></div></section>
+
+<section id="aero">
+<h2>02｜氣動力：葉片為什麼會轉？</h2><p class="muted">葉片做成像機翼一樣的形狀。風流過去後會產生升力和阻力，其中一部分力會幫助葉片轉動。</p>
+<div class="grid2">
+<div class="card wrap"><span class="badge">翼型受力向量</span><canvas id="aeroCanvas" width="820" height="480"></canvas></div>
+<div class="card">
+<div class="control"><label>Pitch 葉片角度 <b id="pitchO">12°</b></label><input id="pitch" type="range" min="-5" max="30" step=".5" value="12"></div>
+<div class="control"><label>相對風速 <b id="relO">10.0 m/s</b></label><input id="rel" type="range" min="2" max="20" step=".1" value="10"></div>
+<div class="formula">F<sub>L</sub> = ½ρV²AC<sub>L</sub></div>
+<div class="formula">F<sub>D</sub> = ½ρV²AC<sub>D</sub></div>
+<div class="grid2"><div><div class="muted">升力</div><div class="metric" id="lift">—</div></div><div><div class="muted">阻力</div><div class="metric" id="drag">—</div></div></div>
+<p class="muted">這裡用簡單模型幫助理解，不用擔心複雜計算；真的風機還會考慮更多因素。</p>
+</div></div></section>
+
+<section id="mechanics">
+<h2>03｜機械：從力到轉矩</h2>
+<div class="grid2">
+<div class="card"><canvas id="torqueCanvas" width="820" height="430"></canvas></div>
+<div class="card">
+<div class="control"><label>受力 F <b id="fO">500 N</b></label><input id="force" type="range" min="50" max="1500" value="500"></div>
+<div class="control"><label>力臂 r <b id="rO">2.0 m</b></label><input id="arm" type="range" min=".5" max="5" step=".1" value="2"></div>
+<div class="control"><label>夾角 θ <b id="aO">90°</b></label><input id="angle" type="range" min="0" max="180" value="90"></div>
+<div class="formula">τ = rF sinθ</div><div class="metric" id="tau">1000 N·m</div>
+<p class="muted">轉子受到的氣動力並不是全部用來旋轉；只有適當方向的力分量能形成有效轉矩。</p>
+</div></div>
+<div class="card" style="margin-top:18px">
+<h3>風機內部能量路徑</h3>
+<table><tr><th>零件</th><th>功能</th></tr>
+<tr><td>葉片</td><td>從氣流取得部分動能，產生氣動力</td></tr>
+<tr><td>輪轂／轉子</td><td>把葉片產生的轉矩集中到旋轉系統</td></tr>
+<tr><td>主軸</td><td>傳遞機械功率</td></tr>
+<tr><td>齒輪箱（部分機型）</td><td>改變轉速與轉矩</td></tr>
+<tr><td>發電機</td><td>利用電磁感應將機械能轉為電能</td></tr></table>
+</div></section>
+
+<section id="power">
+<h2>04｜功率：風到底有多少能量？</h2>
+<div class="grid2">
+<div class="card">
+<div class="formula">P<sub>wind</sub> = ½ρAV³</div>
+<div class="control"><label>風速 V <b id="pvO">8.0 m/s</b></label><input id="pv" type="range" min="2" max="18" step=".1" value="8"></div>
+<div class="control"><label>葉片半徑 R <b id="radO">3.0 m</b></label><input id="rad" type="range" min="1" max="8" step=".1" value="3"></div>
+<div class="control"><label>功率係數 Cp <b id="cpO">35%</b></label><input id="cp" type="range" min="5" max="59.3" step=".1" value="35"></div>
+<div class="control"><label>機電效率 η <b id="etaO">90%</b></label><input id="eta" type="range" min="50" max="98" value="90"></div>
+</div>
+<div class="card">
+<div class="muted">掃風面積 A</div><div class="metric" id="area">—</div>
+<div class="muted">風的理論功率</div><div class="metric" id="wp">—</div>
+<div class="muted">估算機械輸出</div><div class="metric" id="mech">—</div>
+<div class="muted">估算電功率</div><div class="metric cyan" id="elec">—</div>
+<div class="bar"><i id="pbar"></i></div>
+<p class="muted">Betz 極限：理想條件下 Cp 的理論上限約為 59.3%。實際風機通常低於此值。</p>
+</div></div>
+
+<div class="card" style="margin-top:18px"><h3>Cp–λ 概念曲線</h3><canvas id="cpCanvas" width="1180" height="360"></canvas>
+<p class="muted">λ（Tip Speed Ratio）= 葉尖速度 ÷ 自由流風速。這裡畫的是概念性的教學曲線，不代表特定風機的實測資料。</p></div>
+</section>
+
+<section id="generator">
+<h2>05｜發電機：機械能如何變成電？</h2>
+<div class="grid2">
+<div class="card wrap"><span class="badge">電磁感應動畫</span><canvas id="genCanvas" width="820" height="470"></canvas></div>
+<div class="card">
+<h3>法拉第電磁感應</h3>
+<div class="formula">ε = − dΦ / dt</div>
+<p class="muted">當磁通量隨時間改變，線圈中會產生感應電動勢。風機用轉子提供旋轉運動，再透過發電機把機械能轉換成電能。</p>
+<div class="control"><label>發電機轉速 <b id="rpmO">180 RPM</b></label><input id="rpmIn" type="range" min="30" max="600" value="180"></div>
+<div class="metric" id="volt">約 18.0 V</div>
+<div class="bar"><i id="voltBar"></i></div>
+</div></div></section>
+
+
+<section id="experiment">
+<h2>06｜虛擬風力發電機實驗模型</h2>
+<p class="muted">把前面的流體力學與機械概念合在同一個模型裡。調整參數後，觀察「風 → 葉片 → 轉子 → 發電機 → 負載」的連續變化。</p>
+
+<div class="grid2">
+  <div class="card wrap">
+    <span class="badge">實驗模型：風洞＋風機＋發電機</span>
+    <canvas id="experimentCanvas" width="820" height="560" aria-label="虛擬風力發電機實驗模型"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>🔧 實驗控制台</h3>
+
+    <div class="control">
+      <label>風速 V <b id="exVOut">8.0 m/s</b></label>
+      <input id="exV" type="range" min="2" max="18" step=".1" value="8">
+    </div>
+
+    <div class="control">
+      <label>葉片角度 Pitch <b id="exPitchOut">12°</b></label>
+      <input id="exPitch" type="range" min="-5" max="30" step=".5" value="12">
+    </div>
+
+    <div class="control">
+      <label>葉片半徑 R <b id="exROut">3.0 m</b></label>
+      <input id="exR" type="range" min="1" max="6" step=".1" value="3">
+    </div>
+
+    <div class="control">
+      <label>葉片數 <b id="exBladeOut">3 片</b></label>
+      <input id="exBlade" type="range" min="2" max="5" step="1" value="3">
+    </div>
+
+    <div class="control">
+      <label>發電機負載 <b id="exLoadOut">40%</b></label>
+      <input id="exLoad" type="range" min="0" max="100" step="1" value="40">
+    </div>
+
+    <div class="grid2">
+      <div>
+        <div class="muted">葉片平均力矩</div>
+        <div class="metric" id="exTorque">—</div>
+      </div>
+      <div>
+        <div class="muted">轉速</div>
+        <div class="metric" id="exRPM">—</div>
+      </div>
+      <div>
+        <div class="muted">發電電壓</div>
+        <div class="metric" id="exVolt">—</div>
+      </div>
+      <div>
+        <div class="muted">輸出功率</div>
+        <div class="metric cyan" id="exPower">—</div>
+      </div>
+    </div>
+
+    <div class="bar" style="margin-top:16px"><i id="exPowerBar"></i></div>
+    <p class="muted" id="exMessage">先設定條件，再觀察模型的結果。</p>
+
+    <button class="btn" id="recordBtn" type="button">＋ 記錄本次實驗</button>
+    <button class="btn" id="clearBtn" type="button" style="margin-left:6px">清除紀錄</button>
+  </div>
+</div>
+
+<div class="grid2" style="margin-top:18px">
+  <div class="card">
+    <h3>📈 實驗結果：風速 × 輸出功率</h3>
+    <canvas id="experimentGraph" width="820" height="390"></canvas>
+  </div>
+  <div class="card">
+    <h3>🧪 實驗紀錄</h3>
+    <table>
+      <thead>
+        <tr><th>#</th><th>風速</th><th>Pitch</th><th>RPM</th><th>功率</th></tr>
+      </thead>
+      <tbody id="recordBody">
+        <tr><td colspan="5" class="muted">尚未記錄</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <h3>🎯 建議的三個展場實驗</h3>
+  <div class="grid3">
+    <div>
+      <span class="pill">實驗 A</span>
+      <h3>風速效應</h3>
+      <p class="muted">固定 Pitch、半徑與負載，只改變風速。觀察為什麼功率增加得非常快。</p>
+    </div>
+    <div>
+      <span class="pill">實驗 B</span>
+      <h3>葉片角度</h3>
+      <p class="muted">固定風速，慢慢改變 Pitch。觀察轉矩與轉速如何變化。</p>
+    </div>
+    <div>
+      <span class="pill">實驗 C</span>
+      <h3>負載效應</h3>
+      <p class="muted">固定風速與 Pitch，增加發電機負載。比較「轉得快」和「輸出功率高」並不完全相同。</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="challenge">
+<h2>07｜展場挑戰：你能調出有效的風機嗎？</h2>
+<div class="card quiz">
+<h3>問題 1：如果風速從 5 m/s 增加到 10 m/s，在其他條件相同的理想模型中，風功率約變成幾倍？</h3>
+<button onclick="answer(1,false)">A．2 倍</button><button onclick="answer(1,false)">B．4 倍</button><button onclick="answer(1,true)">C．8 倍</button><button onclick="answer(1,false)">D．10 倍</button>
+<div id="q1" class="answer"></div>
+<h3>問題 2：哪個公式描述力矩？</h3>
+<button onclick="answer(2,false)">A．P = ½ρAV³</button><button onclick="answer(2,true)">B．τ = rF sinθ</button><button onclick="answer(2,false)">C．ε = −dΦ/dt</button>
+<div id="q2" class="answer"></div>
+<h3>問題 3：Betz 極限約是多少？</h3>
+<button onclick="answer(3,false)">A．25%</button><button onclick="answer(3,true)">B．59.3%</button><button onclick="answer(3,false)">C．100%</button>
+<div id="q3" class="answer"></div>
+</div>
+<div class="card" style="margin-top:18px;text-align:center">
+<h3>一句話總結</h3><p style="font-size:24px;line-height:1.8">🌬️ <b>風能</b> → 🪽 <b>氣動力</b> → 🌀 <b>力矩與旋轉</b> → ⚙️ <b>機械能</b> → ⚡ <b>電磁感應</b> → 🔌 <b>電能</b></p>
+</div></section>
+
+<footer>WIND LAB EXHIBITION v2.1｜教育展示用模型｜實驗區採簡化物理模型，適合展場互動，不作為工程設計工具</footer>
+
+<script>
+const $=id=>document.getElementById(id),TAU=Math.PI*2,rho=1.225;
+let time=0;
+function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+function arrow(c,x1,y1,x2,y2,color,label){
+ c.strokeStyle=color;c.fillStyle=color;c.lineWidth=4;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+ let a=Math.atan2(y2-y1,x2-x1);c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-12*Math.cos(a-.5),y2-12*Math.sin(a-.5));c.lineTo(x2-12*Math.cos(a+.5),y2-12*Math.sin(a+.5));c.fill();
+ c.font="17px sans-serif";c.fillText(label,x2+8,y2+4);
+}
+function turbine(c,w,h){
+ c.clearRect(0,0,w,h);c.fillStyle="#071522";c.fillRect(0,0,w,h);
+ let cx=w*.63,cy=h*.45,R=Math.min(w,h)*.29;
+ for(let x=0;x<w;x+=25){c.strokeStyle="#17394d";c.beginPath();c.moveTo((x-(time*80)%25),70);c.lineTo((x-(time*80)%25),h-40);c.stroke()}
+ c.strokeStyle="#55788c";c.lineWidth=8;c.beginPath();c.moveTo(cx,cy+15);c.lineTo(cx,h-30);c.stroke();
+ c.fillStyle="#244c63";c.fillRect(cx-12,h-32,24,12);
+ c.save();c.translate(cx,cy);c.rotate(time*1.5);
+ for(let i=0;i<3;i++){c.rotate(TAU/3);c.beginPath();c.moveTo(0,-7);c.bezierCurveTo(R*.25,-R*.13,R*.7,-R*.22,R,-R*.08);c.bezierCurveTo(R*.72,R*.04,R*.3,R*.08,0,7);c.fillStyle="#74e5fa";c.fill();c.strokeStyle="#dffaff";c.stroke()}
+ c.fillStyle="#eaffff";c.beginPath();c.arc(0,0,13,0,TAU);c.fill();c.restore();
+ c.fillStyle="#bcd3df";c.font="18px sans-serif";c.fillText("風 → → →",25,40);c.fillText("葉片",cx-30,cy-R-25);c.fillText("機艙",cx+18,cy+48);
+}
+function flowDraw(c,w,h){
+ c.clearRect(0,0,w,h);
+ c.fillStyle="#071522";c.fillRect(0,0,w,h);
+ let cx=w*.58,cy=h*.5,R=105;
+ let yawDeg=Number($("yaw").value),yaw=yawDeg*Math.PI/180,v=Number($("wind").value);
+
+ // ① upstream flow: nearly straight streamlines
+ for(let y=30;y<h;y+=19){
+  c.beginPath();c.moveTo(0,y);
+  for(let x=0;x<w;x+=9){
+   let dx=x-cx, yy=y;
+   let near=Math.exp(-(dx*dx)/(2*R*R));
+   let blockage=Math.exp(-(dx*dx)/(2*(R*1.2)*(R*1.2)));
+   yy += (cy-y)*near*.34*(1+v/40);
+   yy += Math.sin(yaw)*20*blockage;
+   // ② downstream: growing swirl / wake deflection
+   if(dx>35){
+    let wake=Math.exp(-((y-cy)*(y-cy))/(2*(R*1.35)*(R*1.35)))*Math.min(dx/180,1);
+    yy += 25*Math.sin(dx/28 + (time*1.8)) * wake;
+   }
+   c.lineTo(x,yy);
+  }
+  c.strokeStyle="rgba(114,230,255,.34)";c.lineWidth=1.25;c.stroke();
+ }
+
+ // Air particles
+ for(let i=0;i<125;i++){
+  let x=(i*71+time*85*v/8)%w;
+  let y=30+(i*43)%420;
+  let dx=x-cx, near=Math.exp(-(dx*dx)/(2*R*R));
+  y += (cy-y)*near*.34;
+  if(dx>35){
+   let wake=Math.exp(-((y-cy)*(y-cy))/(2*(R*1.35)*(R*1.35)))*Math.min(dx/180,1);
+   y += 25*Math.sin(dx/28+time*1.8)*wake;
+  }
+  c.fillStyle="#dffaff";c.beginPath();c.arc(x,y,1.8,0,TAU);c.fill();
+ }
+
+ // ③ local pressure/velocity demonstration around blades
+ c.save();c.translate(cx,cy);c.rotate(time*.8+yawDeg*.01);
+ for(let i=0;i<3;i++){
+  c.rotate(TAU/3);
+  c.beginPath();c.moveTo(0,-6);c.quadraticCurveTo(55,-23,105,-10);c.quadraticCurveTo(62,12,0,6);
+  c.fillStyle="#70dff5";c.fill();
+ }
+ c.restore();
+
+ // Labels for exhibition visitors
+ c.fillStyle="#d8edf6";c.font="17px sans-serif";
+ c.fillText("① 入流：風與葉片相遇",25,42);
+ c.fillText("② 尾流：空氣帶有旋轉",w-220,42);
+ c.fillText("③ 翼型周圍：速度／壓力變化",w-290,h-24);
+
+ // swirl arrows in wake
+ for(let k=0;k<4;k++){
+  let sx=cx+150+k*55, sy=cy-65+k*32;
+  c.strokeStyle="rgba(255,209,102,.78)";c.lineWidth=3;c.beginPath();
+  c.arc(sx,sy,18+k*2,-.7,1.7);c.stroke();
+ }
+}
+function aeroDraw(c,w,h){
+ c.clearRect(0,0,w,h);c.fillStyle="#071522";c.fillRect(0,0,w,h);
+ let cx=w*.45,cy=h*.52,pitch=Number($("pitch").value)*Math.PI/180;
+ c.save();c.translate(cx,cy);c.rotate(pitch-.12);c.fillStyle="#bdf6ff";c.beginPath();c.moveTo(-180,-12);c.quadraticCurveTo(-20,-35,175,-7);c.quadraticCurveTo(25,30,-180,12);c.closePath();c.fill();c.strokeStyle="#efffff";c.stroke();c.restore();
+ let V=Number($("rel").value),deg=Number($("pitch").value),CL=clamp(.11*(deg+3),-.7,1.8),CD=.04+.012*CL*CL,L=.5*rho*V*V*CL,D=.5*rho*V*V*CD;
+ arrow(c,cx,cy,cx+170,cy,"#ffd166","相對風");
+ arrow(c,cx,cy,cx,cy-110*Math.sign(CL||1),"#72e6ff","升力");
+ arrow(c,cx,cy,cx-80,cy+35,"#ff9696","阻力");
+ $("lift").textContent=Math.abs(L).toFixed(1)+" N";$("drag").textContent=D.toFixed(1)+" N";
+}
+function torqueDraw(c,w,h){
+ c.clearRect(0,0,w,h);c.fillStyle="#071522";c.fillRect(0,0,w,h);
+ let cx=180,cy=215,r=Number($("arm").value)*55,a=Number($("angle").value)*Math.PI/180,F=Number($("force").value),ex=cx+r,ey=cy;
+ c.strokeStyle="#55778b";c.lineWidth=8;c.beginPath();c.moveTo(cx,cy);c.lineTo(ex,ey);c.stroke();
+ c.fillStyle="#eaffff";c.beginPath();c.arc(cx,cy,14,0,TAU);c.fill();
+ let fx=ex+Math.cos(-a)*F*.075,fy=ey+Math.sin(-a)*F*.075;arrow(c,ex,ey,fx,fy,"#ffd166","F");
+ c.fillStyle="#cce0ea";c.font="18px sans-serif";c.fillText("r = 力臂",cx+70,cy-18);c.fillText("轉軸",cx-28,cy+43);
+}
+function cpGraph(c,w,h){
+ c.clearRect(0,0,w,h);c.fillStyle="#071522";c.fillRect(0,0,w,h);
+ c.strokeStyle="#476274";c.lineWidth=1;c.beginPath();c.moveTo(65,h-55);c.lineTo(w-25,h-55);c.moveTo(65,h-55);c.lineTo(65,25);c.stroke();
+ c.fillStyle="#a9c0ce";c.font="15px sans-serif";c.fillText("Cp",25,35);c.fillText("λ（Tip Speed Ratio）",w-180,h-22);
+ c.strokeStyle="#72e6ff";c.lineWidth=4;c.beginPath();
+ for(let x=0;x<=100;x++){let lam=.2+x*.1,cp=.593*Math.exp(-Math.pow((lam-6)/2.7,2));let px=65+x*(w-100)/100,py=h-55-cp*(h-100);if(x===0)c.moveTo(px,py);else c.lineTo(px,py)}c.stroke();
+ c.setLineDash([7,7]);c.strokeStyle="#ffd166";c.beginPath();c.moveTo(65,h-55-.593*(h-100));c.lineTo(w-25,h-55-.593*(h-100));c.stroke();c.setLineDash([]);
+ c.fillStyle="#ffd166";c.fillText("Betz 理論上限 59.3%",85,45);
+}
+function genDraw(c,w,h){
+ c.clearRect(0,0,w,h);c.fillStyle="#071522";c.fillRect(0,0,w,h);
+ let cx=w*.5,cy=h*.5,r=120,spin=time*Number($("rpmIn").value)/80;
+ c.save();c.translate(cx,cy);c.rotate(spin);
+ for(let i=0;i<8;i++){c.rotate(TAU/8);c.fillStyle=i%2?"#ff8f8f":"#72e6ff";c.fillRect(-20,-r,40,35)}
+ c.restore();
+ c.strokeStyle="#d7faff";c.lineWidth=5;c.beginPath();c.arc(cx,cy,r+8,0,TAU);c.stroke();
+ for(let i=0;i<18;i++){let x=(i*63+time*Number($("rpmIn").value))%w;c.strokeStyle="rgba(114,230,255,.25)";c.beginPath();c.moveTo(x,80);c.lineTo(x+30,80);c.stroke()}
+ c.fillStyle="#cfe6ef";c.font="18px sans-serif";c.fillText("旋轉磁場",cx-45,cy+r+45);c.fillText("線圈",cx-25,cy-r-30);
+}
+function update(){
+ let v=+$("wind").value,y=+$("yaw").value; $("v1").textContent=v.toFixed(1)+" m/s";$("yawO").textContent=y+"°";$("dynamicP").textContent=(.5*rho*v*v).toFixed(1)+" Pa";$("dir").textContent=y+"°";$("flowState").textContent=Math.abs(y)>22?"偏航明顯":"穩定";
+ let p=+$("pitch").value,rv=+$("rel").value;$("pitchO").textContent=p.toFixed(1)+"°";$("relO").textContent=rv.toFixed(1)+" m/s";
+ let CL=clamp(.11*(p+3),-.7,1.8),CD=.04+.012*CL*CL;$("lift").textContent=Math.abs(.5*rho*rv*rv*CL).toFixed(1)+" N";$("drag").textContent=(.5*rho*rv*rv*CD).toFixed(1)+" N";
+ let F=+$("force").value,r=+$("arm").value,a=+$("angle").value;$("fO").textContent=F+" N";$("rO").textContent=r.toFixed(1)+" m";$("aO").textContent=a+"°";$("tau").textContent=(r*F*Math.sin(a*Math.PI/180)).toFixed(1)+" N·m";
+ let V=+$("pv").value,R=+$("rad").value,Cp=+$("cp").value/100,eta=+$("eta").value/100,A=Math.PI*R*R,P=.5*rho*A*V**3,M=P*Cp,E=M*eta;
+ $("pvO").textContent=V.toFixed(1)+" m/s";$("radO").textContent=R.toFixed(1)+" m";$("cpO").textContent=(Cp*100).toFixed(1)+"%";$("etaO").textContent=(eta*100).toFixed(0)+"%";
+ $("area").textContent=A.toFixed(2)+" m²";$("wp").textContent=(P/1000).toFixed(2)+" kW";$("mech").textContent=(M/1000).toFixed(2)+" kW";$("elec").textContent=(E/1000).toFixed(2)+" kW";$("pbar").style.width=Math.min(100,Cp/.593*100)+"%";
+ let rpm=+$("rpmIn").value;$("rpmO").textContent=rpm+" RPM";$("volt").textContent="約 "+(rpm*.1).toFixed(1)+" V";$("voltBar").style.width=Math.min(100,rpm/600*100)+"%";
+}
+function answer(q,ok){$("q"+q).textContent=ok?"✓ 正確！":"✗ 再想想看。";$("q"+q).style.color=ok?"#72e6ff":"#ff9f9f"}
+["wind","yaw","pitch","rel","force","arm","angle","pv","rad","cp","eta","rpmIn"].forEach(id=>$(id).addEventListener("input",update));
+["exV","exPitch","exR","exBlade","exLoad"].forEach(id=>$(id).addEventListener("input",()=>{update();updateExperiment()}));
+$("recordBtn").addEventListener("click",()=>{const d=experimentValues();experimentRecords.push(d);renderRecords();drawExperimentGraph();});
+$("clearBtn").addEventListener("click",()=>{experimentRecords=[];renderRecords();drawExperimentGraph();});
+const hc=$("heroCanvas").getContext("2d"),fl=$("flowCanvas").getContext("2d"),ac=$("aeroCanvas").getContext("2d"),tc=$("torqueCanvas").getContext("2d"),cc=$("cpCanvas").getContext("2d"),gc=$("genCanvas").getContext("2d");
+const exc=$("experimentCanvas").getContext("2d"), egc=$("experimentGraph").getContext("2d");
+let experimentRecords=[];
+
+function experimentValues(){
+  const V=+$("exV").value, pitch=+$("exPitch").value, R=+$("exR").value;
+  const blades=+$("exBlade").value, load=+$("exLoad").value/100;
+  const A=Math.PI*R*R;
+  const CL=clamp(.10*(pitch+3),-.5,1.55);
+  const CD=.045+.012*CL*CL;
+  const q=.5*rho*V*V;
+  // 教育模型：把氣動力映射成近似總轉矩
+  const tangential=(q*A*(Math.max(CL,0)*.72 + CD*.10))*0.18;
+  const bladeFactor=0.78 + 0.12*blades;
+  const aeroTorque=Math.max(0,tangential*bladeFactor);
+  // 負載愈大，穩態轉速愈低；但有一個簡化的功率輸出關係
+  const freeRPM=45 + 9.5*V + 7*R + Math.max(CL,0)*22;
+  const rpm=clamp(freeRPM*(1-.70*load),0,520);
+  const mechanicalPower=Math.max(0,aeroTorque*2*Math.PI*rpm/60);
+  const electricalEff=.82;
+  const power=mechanicalPower*electricalEff*(1-.18*load);
+  const volt=0.055*rpm;
+  return {V,pitch,R,blades,load,aeroTorque,rpm,mechanicalPower,power,volt,A,CL,CD};
+}
+
+function drawExperiment(){
+  const c=exc,w=820,h=560;
+  c.clearRect(0,0,w,h); c.fillStyle="#061521"; c.fillRect(0,0,w,h);
+  const d=experimentValues(), cx=525, cy=275, Rpx=130;
+  // wind tunnel
+  c.strokeStyle="#22475e";c.lineWidth=3;
+  c.strokeRect(25,90,760,360);
+  for(let i=0;i<26;i++){
+    let x=(i*43+time*85*d.V/8)%740+25;
+    let y=110+(i*71)%320;
+    c.strokeStyle="rgba(114,230,255,.38)";
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+25,y);c.stroke();
+  }
+  // wake
+  for(let i=0;i<34;i++){
+    let x=cx+80+((i*31+time*45*d.V/8)%230), y=cy-95+(i*19)%190;
+    c.fillStyle="rgba(255,209,102,.72)";
+    c.beginPath();c.arc(x,y,2.2,0,TAU);c.fill();
+  }
+  // tower
+  c.strokeStyle="#547588";c.lineWidth=8;c.beginPath();c.moveTo(cx,cy+15);c.lineTo(cx,h-80);c.stroke();
+  c.fillStyle="#244b62";c.fillRect(cx-42,h-88,84,15);
+  // rotor
+  c.save();c.translate(cx,cy);c.rotate(time*(d.rpm/70));
+  for(let i=0;i<d.blades;i++){
+    c.rotate(TAU/d.blades);
+    c.beginPath();c.moveTo(0,-7);c.bezierCurveTo(Rpx*.25,-16,Rpx*.72,-31,Rpx,-12);c.bezierCurveTo(Rpx*.72,8,Rpx*.3,14,0,7);
+    c.fillStyle="#72e6ff";c.fill();c.strokeStyle="#eaffff";c.stroke();
+  }
+  c.fillStyle="#ecfbff";c.beginPath();c.arc(0,0,14,0,TAU);c.fill();c.restore();
+
+  // generator and load indicator
+  c.fillStyle="#bcd2df";c.font="18px sans-serif";c.fillText("風",32,70);c.fillText("旋轉尾流",cx+115,cy+30);
+  c.fillText("發電機",cx-38,cy+75);c.fillText("負載",cx+170,h-82);
+  c.strokeStyle="#d5f7ff";c.lineWidth=2;c.beginPath();c.moveTo(cx+10,cy+50);c.lineTo(cx+145,h-76);c.stroke();
+  c.strokeStyle="#ffd166";c.lineWidth=5;c.beginPath();c.moveTo(cx+145,h-76);c.lineTo(cx+190,h-76);c.stroke();
+  c.fillStyle="#ffd166";c.font="16px sans-serif";c.fillText(Math.round(d.load*100)+"%",cx+195,h-70);
+
+  // gauges
+  c.fillStyle="#89a7b8";c.font="15px sans-serif";c.fillText("即時模型結果",35,485);
+  c.fillStyle="#eaf8ff";c.font="700 22px sans-serif";
+  c.fillText("RPM "+Math.round(d.rpm),35,520);
+  c.fillText("功率 "+(d.power/1000).toFixed(2)+" kW",190,520);
+  c.fillText("電壓 "+d.volt.toFixed(1)+" V",400,520);
+}
+
+function drawExperimentGraph(){
+  const c=egc,w=820,h=390;
+  c.clearRect(0,0,w,h);c.fillStyle="#071522";c.fillRect(0,0,w,h);
+  const left=65,right=25,top=25,bottom=55;
+  const Vmin=2,Vmax=18,maxP=Math.max(1, ...experimentRecords.map(x=>x.power/1000));
+  c.strokeStyle="#456375";c.lineWidth=1;c.beginPath();
+  c.moveTo(left,top);c.lineTo(left,h-bottom);c.lineTo(w-right,h-bottom);c.stroke();
+  c.fillStyle="#abc0cc";c.font="14px sans-serif";c.fillText("功率 (kW)",10,20);c.fillText("風速 (m/s)",w-105,h-18);
+  // faint ideal curve for reference
+  c.setLineDash([6,6]);c.strokeStyle="#496171";c.beginPath();
+  for(let x=0;x<=100;x++){
+    const v=Vmin+(Vmax-Vmin)*x/100;
+    const yv=.5*rho*(Math.PI*3*3)*Math.pow(v,3)*.35*.82/1000;
+    const px=left+(v-Vmin)/(Vmax-Vmin)*(w-left-right);
+    const py=h-bottom-Math.min(1,yv/Math.max(1,maxP))*((h-top-bottom)-10);
+    if(x===0)c.moveTo(px,py);else c.lineTo(px,py);
+  }
+  c.stroke();c.setLineDash([]);
+  c.fillStyle="#6f8796";c.fillText("參考：V³ 趨勢",75,43);
+  // records
+  experimentRecords.forEach((r,i)=>{
+    const px=left+(r.V-Vmin)/(Vmax-Vmin)*(w-left-right);
+    const py=h-bottom-(r.power/1000)/Math.max(1,maxP)*((h-top-bottom)-10);
+    c.fillStyle="#72e6ff";c.beginPath();c.arc(px,py,6,0,TAU);c.fill();
+    c.fillStyle="#dffaff";c.font="12px sans-serif";c.fillText(String(i+1),px+8,py-7);
+  });
+}
+
+function updateExperiment(){
+  const d=experimentValues();
+  $("exVOut").textContent=d.V.toFixed(1)+" m/s";
+  $("exPitchOut").textContent=d.pitch.toFixed(1)+"°";
+  $("exROut").textContent=d.R.toFixed(1)+" m";
+  $("exBladeOut").textContent=d.blades+" 片";
+  $("exLoadOut").textContent=Math.round(d.load*100)+"%";
+  $("exTorque").textContent=d.aeroTorque.toFixed(1)+" N·m";
+  $("exRPM").textContent=Math.round(d.rpm)+" RPM";
+  $("exVolt").textContent=d.volt.toFixed(1)+" V";
+  $("exPower").textContent=(d.power/1000).toFixed(2)+" kW";
+  $("exPowerBar").style.width=clamp(d.power/5000*100,0,100)+"%";
+  let msg="風速提高會大幅增加可取得的風功率；負載增加通常會使穩態轉速下降。";
+  if(d.pitch<3 || d.pitch>25) msg="目前葉片角度偏離簡化模型的高效率範圍，轉矩可能下降。";
+  if(d.load>0.8) msg="負載很大，發電機從轉子取走的機械功較多，因此轉速明顯下降。";
+  $("exMessage").textContent=msg;
+  drawExperiment();
+  drawExperimentGraph();
+}
+
+function renderRecords(){
+  const body=$("recordBody");
+  if(!experimentRecords.length){
+    body.innerHTML='<tr><td colspan="5" class="muted">尚未記錄</td></tr>';
+    return;
+  }
+  body.innerHTML=experimentRecords.map((r,i)=>
+    `<tr><td>${i+1}</td><td>${r.V.toFixed(1)}</td><td>${r.pitch.toFixed(1)}°</td><td>${Math.round(r.rpm)}</td><td>${(r.power/1000).toFixed(2)} kW</td></tr>`
+  ).join("");
+}
+
+function animate(){time+=.016;turbine(hc,820,540);flowDraw(fl,820,500);aeroDraw(ac,820,480);torqueDraw(tc,820,430);cpGraph(cc,1180,360);genDraw(gc,820,470);drawExperiment();requestAnimationFrame(animate)}
+update();updateExperiment();renderRecords();animate();
+</script>
+</body>
+</html>
