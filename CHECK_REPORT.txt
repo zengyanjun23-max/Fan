@@ -1,0 +1,4 @@
+energy_before_experiment=True
+embedded_energy_image=True
+duplicate_ids=[]
+missing_anchors=[]
